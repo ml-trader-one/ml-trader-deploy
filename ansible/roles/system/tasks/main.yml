@@ -1,0 +1,50 @@
+---
+- name: Update apt cache and upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install required dependencies
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - ufw
+    state: present
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Allow HTTP through UFW
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+
+- name: Allow HTTPS through UFW
+  ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+
+- name: Allow Xray Admin through UFW
+  ufw:
+    rule: allow
+    port: '2053'
+    proto: tcp
+
+- name: Allow Xray Traffic through UFW
+  ufw:
+    rule: allow
+    port: '2096'
+    proto: tcp
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
