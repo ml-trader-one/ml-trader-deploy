@@ -144,8 +144,28 @@ services:
     ports:
       - "127.0.0.1:8002:8000"
 
+  model-processing-service:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/model-processing-service:${FEATURE_IMAGE_TAG:-latest}
+    container_name: model_processing
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=market_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - LOKI_URL=http://loki:3100
+    volumes:
+      - model_data:/app/models
+    ports:
+      - "127.0.0.1:8003:8000"
+
 volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
   loki_data:
+  model_data:
