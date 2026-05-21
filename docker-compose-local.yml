@@ -104,7 +104,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
 
   data-ingestion-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/data-ingestion-service:${INGESTION_IMAGE_TAG:-latest}
+    build: ../data-ingestion-service
     container_name: data_ingestion
     restart: unless-stopped
     depends_on:
@@ -114,6 +114,7 @@ services:
         condition: service_healthy
     environment:
       - INVEST_TOKEN=${INVEST_TOKEN}
+      - STREAM_INTERVAL=${STREAM_INTERVAL:SUBSCRIPTION_INTERVAL_ONE_DAY}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=market_data
@@ -125,7 +126,7 @@ services:
       - "127.0.0.1:8001:8000"
 
   data-feature-engineering-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/data-feature-engineering-service:${FEATURE_IMAGE_TAG:-latest}
+    build: ../data-feature-engineering-service
     container_name: data_feature_engineering
     restart: unless-stopped
     depends_on:
@@ -145,7 +146,7 @@ services:
       - "127.0.0.1:8002:8000"
 
   model-processing-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/model-processing-service:${FEATURE_IMAGE_TAG:-latest}
+    build: ../model-processing-service
     container_name: model_processing
     restart: unless-stopped
     depends_on:

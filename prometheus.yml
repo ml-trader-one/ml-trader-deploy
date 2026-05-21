@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'data-ingestion-service'
+    static_configs:
+      - targets: ['data-ingestion-service:8000']
+    metrics_path: /metrics
+
+  - job_name: 'data-feature-engineering-service'
+    static_configs:
+      - targets: ['data-feature-engineering-service:8000']
+    metrics_path: /metrics
