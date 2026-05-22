@@ -114,7 +114,7 @@ services:
         condition: service_healthy
     environment:
       - INVEST_TOKEN=${INVEST_TOKEN}
-      - STREAM_INTERVAL=${STREAM_INTERVAL:SUBSCRIPTION_INTERVAL_ONE_DAY}
+      - STREAM_INTERVAL=${STREAM_INTERVAL:-SUBSCRIPTION_INTERVAL_ONE_DAY}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=market_data
