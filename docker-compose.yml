@@ -145,7 +145,7 @@ services:
       - "127.0.0.1:8002:8000"
 
   model-processing-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/model-processing-service:${FEATURE_IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/model-processing-service:${MODEL_IMAGE_TAG:-latest}
     container_name: model_processing
     restart: unless-stopped
     depends_on:
