@@ -1,0 +1,323 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "type": "datasource",
+      "pluginId": "prometheus"
+    }
+  ],
+  "title": "Model Processing Service",
+  "uid": "model-processing-service",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "instrument_uid",
+        "label": "Instrument",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(model_best_mape, instrument_uid)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2
+      },
+      {
+        "name": "interval",
+        "label": "Interval",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(model_best_mape, interval)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP — RPS",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"model-processing-service\"}[1m])) by (handler, method, status)",
+          "legendFormat": "{{method}} {{handler}} {{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "HTTP — Latency P50 / P95 / P99",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"model-processing-service\"}[5m])) by (le, handler))",
+          "legendFormat": "P50 {{handler}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"model-processing-service\"}[5m])) by (le, handler))",
+          "legendFormat": "P95 {{handler}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"model-processing-service\"}[5m])) by (le, handler))",
+          "legendFormat": "P99 {{handler}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 3,
+      "title": "HTTP — Error Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"model-processing-service\", status=~\"5..\"}[1m])) by (handler) / sum(rate(http_requests_total{job=\"model-processing-service\"}[1m])) by (handler)",
+          "legendFormat": "{{handler}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "MAPE лучшей модели",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "model_best_mape{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
+          "legendFormat": "{{instrument_uid}} / {{interval}} — {{best_model}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.03 },
+              { "color": "red", "value": 0.07 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Leaderboard — MAPE всех моделей (последний запуск)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "model_leaderboard_mape{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
+          "legendFormat": "{{model_name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "id": 12,
+      "title": "Запуски обучения (done / error)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "increase(model_training_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])",
+          "legendFormat": "{{instrument_uid}} {{interval}} — {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 13,
+      "title": "Длительность обучения",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(model_training_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])) by (le, instrument_uid, interval))",
+          "legendFormat": "P50 {{instrument_uid}} / {{interval}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(model_training_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])) by (le, instrument_uid, interval))",
+          "legendFormat": "P95 {{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 14,
+      "title": "Размер обучающей выборки",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "model_training_samples_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
+          "legendFormat": "{{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 20,
+      "title": "Предсказанная цена закрытия",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "model_predicted_close_price{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
+          "legendFormat": "{{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } }
+    },
+    {
+      "id": 21,
+      "title": "Распределение предсказанного изменения цены %",
+      "type": "histogram",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum(increase(model_predicted_change_pct_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[6h])) by (le)",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 22,
+      "title": "Прогнозы — RPS (success / error)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 32, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum(rate(model_prediction_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (instrument_uid, interval, status)",
+          "legendFormat": "{{instrument_uid}} {{interval}} — {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 23,
+      "title": "Прогнозы — Latency P50 / P95",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 32, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(model_prediction_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (le, instrument_uid, interval))",
+          "legendFormat": "P50 {{instrument_uid}} / {{interval}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(model_prediction_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (le, instrument_uid, interval))",
+          "legendFormat": "P95 {{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 30,
+      "title": "Планировщик — запуски джобов",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 32, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "increase(scheduler_job_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])",
+          "legendFormat": "{{instrument_uid}} {{interval}} — {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 31,
+      "title": "Планировщик — активные джобы",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 40, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "scheduler_jobs_active",
+          "legendFormat": "Active jobs"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 32,
+      "title": "Планировщик — длительность джоба P95",
+      "type": "timeseries",
+      "gridPos": { "x": 4, "y": 40, "w": 10, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(scheduler_job_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (le, instrument_uid, interval))",
+          "legendFormat": "P95 {{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 33,
+      "title": "Планировщик — error rate",
+      "type": "timeseries",
+      "gridPos": { "x": 14, "y": 40, "w": 10, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "rate(scheduler_job_runs_total{status=\"error\", instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m]) / rate(scheduler_job_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])",
+          "legendFormat": "{{instrument_uid}} / {{interval}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.05 },
+              { "color": "red", "value": 0.2 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
