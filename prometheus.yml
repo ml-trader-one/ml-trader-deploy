@@ -16,3 +16,8 @@ scrape_configs:
     static_configs:
       - targets: ['data-feature-engineering-service:8000']
     metrics_path: /metrics
+
+  - job_name: "model-processing-service"
+    static_configs:
+      - targets: [ "model-processing-service:8000" ]
+    metrics_path: /metrics
