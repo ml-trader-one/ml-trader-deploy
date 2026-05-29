@@ -98,6 +98,7 @@ services:
       GF_DATASOURCES_DEFAULT_URL: http://prometheus:9090
     ports:
       - "127.0.0.1:3001:3000"
+
   loki:
     image: grafana/loki:latest
     container_name: market_loki

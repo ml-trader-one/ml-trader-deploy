@@ -19,7 +19,7 @@
         "name": "instrument_uid",
         "label": "Instrument",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
         "query": "label_values(model_best_mape, instrument_uid)",
         "includeAll": true,
         "allValue": ".*",
@@ -30,7 +30,7 @@
         "name": "interval",
         "label": "Interval",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
         "query": "label_values(model_best_mape, interval)",
         "includeAll": true,
         "allValue": ".*",
@@ -45,7 +45,7 @@
       "title": "HTTP — RPS",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total{job=\"model-processing-service\"}[1m])) by (handler, method, status)",
@@ -61,7 +61,7 @@
       "title": "HTTP — Latency P50 / P95 / P99",
       "type": "timeseries",
       "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"model-processing-service\"}[5m])) by (le, handler))",
@@ -83,7 +83,7 @@
       "title": "HTTP — Error Rate",
       "type": "timeseries",
       "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total{job=\"model-processing-service\", status=~\"5..\"}[1m])) by (handler) / sum(rate(http_requests_total{job=\"model-processing-service\"}[1m])) by (handler)",
@@ -109,7 +109,7 @@
       "title": "MAPE лучшей модели",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "model_best_mape{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
@@ -136,7 +136,7 @@
       "title": "Leaderboard — MAPE всех моделей (последний запуск)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "model_leaderboard_mape{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
@@ -150,7 +150,7 @@
       "title": "Запуски обучения (done / error)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "increase(model_training_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])",
@@ -164,7 +164,7 @@
       "title": "Длительность обучения",
       "type": "timeseries",
       "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(model_training_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])) by (le, instrument_uid, interval))",
@@ -182,7 +182,7 @@
       "title": "Размер обучающей выборки",
       "type": "timeseries",
       "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "model_training_samples_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
@@ -196,7 +196,7 @@
       "title": "Предсказанная цена закрытия",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "model_predicted_close_price{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}",
@@ -210,7 +210,7 @@
       "title": "Распределение предсказанного изменения цены %",
       "type": "histogram",
       "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(increase(model_predicted_change_pct_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[6h])) by (le)",
@@ -224,7 +224,7 @@
       "title": "Прогнозы — RPS (success / error)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 32, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(model_prediction_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (instrument_uid, interval, status)",
@@ -238,7 +238,7 @@
       "title": "Прогнозы — Latency P50 / P95",
       "type": "timeseries",
       "gridPos": { "x": 8, "y": 32, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(model_prediction_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (le, instrument_uid, interval))",
@@ -256,7 +256,7 @@
       "title": "Планировщик — запуски джобов",
       "type": "timeseries",
       "gridPos": { "x": 16, "y": 32, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "increase(scheduler_job_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[1h])",
@@ -270,7 +270,7 @@
       "title": "Планировщик — активные джобы",
       "type": "stat",
       "gridPos": { "x": 0, "y": 40, "w": 4, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "scheduler_jobs_active",
@@ -284,7 +284,7 @@
       "title": "Планировщик — длительность джоба P95",
       "type": "timeseries",
       "gridPos": { "x": 4, "y": 40, "w": 10, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(scheduler_job_duration_seconds_bucket{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])) by (le, instrument_uid, interval))",
@@ -298,7 +298,7 @@
       "title": "Планировщик — error rate",
       "type": "timeseries",
       "gridPos": { "x": 14, "y": 40, "w": 10, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "rate(scheduler_job_runs_total{status=\"error\", instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m]) / rate(scheduler_job_runs_total{instrument_uid=~\"$instrument_uid\", interval=~\"$interval\"}[5m])",
