@@ -1,0 +1,304 @@
+{
+  "title": "Data Feature Engineering Service",
+  "uid": "data-feature-engineering-service",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "topic",
+        "label": "Topic",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(kafka_messages_processed_total, topic)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Обработка сообщений — Throughput",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+    },
+    {
+      "id": 1,
+      "title": "Сообщений обработано/сек",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 1, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_messages_processed_total{topic=~\"$topic\"}[1m])) by (topic)",
+          "legendFormat": "{{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "msgps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "options": { "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 2,
+      "title": "Ошибок обработки/сек",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 1, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_messages_failed_total{topic=~\"$topic\"}[1m])) by (topic)",
+          "legendFormat": "{{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "msgps",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        }
+      }
+    },
+
+    {
+      "id": 101,
+      "type": "row",
+      "title": "Stat cards",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 1 }
+    },
+    {
+      "id": 10,
+      "title": "Обработано за час",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 10, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(kafka_messages_processed_total{topic=~\"$topic\"}[1h]))",
+          "legendFormat": "processed"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 11,
+      "title": "Ошибок за час",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 10, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(kafka_messages_failed_total{topic=~\"$topic\"}[1h]))",
+          "legendFormat": "failed"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 12,
+      "title": "Error Rate",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 10, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_messages_failed_total{topic=~\"$topic\"}[5m])) / sum(rate(kafka_messages_processed_total{topic=~\"$topic\"}[5m]))",
+          "legendFormat": "error rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 13,
+      "title": "Processing Rate (текущий msg/s)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 10, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_messages_processed_total{topic=~\"$topic\"}[1m]))",
+          "legendFormat": "msg/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "msgps",
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 200,
+      "type": "row",
+      "title": "Латентность обработки",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 }
+    },
+    {
+      "id": 20,
+      "title": "Processing Latency P50 / P95 / P99",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 15, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(message_processing_duration_seconds_bucket{topic=~\"$topic\"}[2m])) by (le, topic))",
+          "legendFormat": "P50 {{topic}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(message_processing_duration_seconds_bucket{topic=~\"$topic\"}[2m])) by (le, topic))",
+          "legendFormat": "P95 {{topic}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(message_processing_duration_seconds_bucket{topic=~\"$topic\"}[2m])) by (le, topic))",
+          "legendFormat": "P99 {{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1.0 },
+              { "color": "red", "value": 5.0 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 21,
+      "title": "Heatmap — Processing Latency",
+      "type": "heatmap",
+      "gridPos": { "x": 16, "y": 15, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(message_processing_duration_seconds_bucket{topic=~\"$topic\"}[2m])) by (le)",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "options": {
+        "yAxis": { "unit": "s" },
+        "color": { "scheme": "Oranges", "mode": "scheme" }
+      }
+    },
+
+    {
+      "id": 300,
+      "type": "row",
+      "title": "Надёжность и ошибки",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 23, "w": 24, "h": 1 }
+    },
+    {
+      "id": 30,
+      "title": "Error Rate по топикам",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_messages_failed_total{topic=~\"$topic\"}[1m])) by (topic) / sum(rate(kafka_messages_processed_total{topic=~\"$topic\"}[1m])) by (topic)",
+          "legendFormat": "{{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 31,
+      "title": "Успешно vs Ошибки (за период)",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(kafka_messages_processed_total{topic=~\"$topic\"}[$__range]))",
+          "legendFormat": "Успешно"
+        },
+        {
+          "expr": "sum(increase(kafka_messages_failed_total{topic=~\"$topic\"}[$__range]))",
+          "legendFormat": "Ошибки"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "^Ошибки.*" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "^Успешно.*" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": { "pieType": "donut", "tooltip": { "mode": "multi" } }
+    }
+  ]
+}
